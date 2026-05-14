@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>好きな飲み物アンケート</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f5f7f9;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .voting-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .option:hover {
+            background-color: #f0f4f8;
+        }
+
+        .option input {
+            margin-right: 1rem;
+        }
+
+        button {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .results {
+            margin-top: 2rem;
+            border-top: 2px solid #eee;
+            padding-top: 1.5rem;
+        }
+
+        .result-item {
+            margin-bottom: 1rem;
+        }
+
+        .result-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            background-color: #eee;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background-color: var(--primary-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>好きな飲み物は？</h1>
+    
+    <form id="voting-form" class="voting-form">
+        <label class="option">
+            <input type="radio" name="drink" value="orange" required>
+            オレンジジュース
+        </label>
+        <label class="option">
+            <input type="radio" name="drink" value="apple">
+            アップルジュース
+        </label>
+        <label class="option">
+            <input type="radio" name="drink" value="oolong">
+            ウーロン茶
+        </label>
+        <label class="option">
+            <input type="radio" name="drink" value="ginger">
+            ジンジャエール
+        </label>
+        <button type="submit">投票する</button>
+    </form>
+
+    <div id="results-section" class="results">
+        <h2>現在の結果</h2>
+        <div id="result-list">
+            <!-- 結果がここに挿入されます -->
+            <div class="result-item" data-drink="orange">
+                <div class="result-label">
+                    <span>オレンジジュース</span>
+                    <span class="count">0票</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill"></div></div>
+            </div>
+            <div class="result-item" data-drink="apple">
+                <div class="result-label">
+                    <span>アップルジュース</span>
+                    <span class="count">0票</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill"></div></div>
+            </div>
+            <div class="result-item" data-drink="oolong">
+                <div class="result-label">
+                    <span>ウーロン茶</span>
+                    <span class="count">0票</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill"></div></div>
+            </div>
+            <div class="result-item" data-drink="ginger">
+                <div class="result-label">
+                    <span>ジンジャエール</span>
+                    <span class="count">0票</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('voting-form');
+    const votes = {
+        orange: 0,
+        apple: 0,
+        oolong: 0,
+        ginger: 0
+    };
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const selectedDrink = form.drink.value;
+        if (selectedDrink) {
+            votes[selectedDrink]++;
+            updateResults();
+            form.reset();
+        }
+    });
+
+    function updateResults() {
+        const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
+        
+        for (const [drink, count] of Object.entries(votes)) {
+            const item = document.querySelector(`.result-item[data-drink="${drink}"]`);
+            const countSpan = item.querySelector('.count');
+            const progressFill = item.querySelector('.progress-fill');
+            
+            const percentage = totalVotes === 0 ? 0 : (count / totalVotes) * 100;
+            
+            countSpan.textContent = `${count}票`;
+            progressFill.style.width = `${percentage}%`;
+        }
+    }
+
+    // 初期表示
+    updateResults();
+</script>
+
+</body>
+</html>
