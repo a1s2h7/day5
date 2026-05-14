@@ -7,7 +7,9 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "sqlite3": "^5.1.0",
-    "express": "^4.19.0"
+    "dotenv": "^17.4.2",
+    "express": "^4.19.0",
+    "express-session": "^1.19.0",
+    "sqlite3": "^5.1.0"
   }
 }

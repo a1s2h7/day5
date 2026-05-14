@@ -1,4 +1,6 @@
+require('dotenv').config();
 const express = require('express');
+const session = require('express-session');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
@@ -19,11 +21,53 @@ db.serialize(() => {
     `);
 });
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname)));
+// セッションの設定
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'default_secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1日
+}));
 
-// 投票の登録
-app.post('/vote', (req, res) => {
+app.use(express.json());
+
+// 認証チェック用ミドルウェア
+const checkAuth = (req, res, next) => {
+    if (req.session.isLoggedIn) {
+        next();
+    } else {
+        res.status(401).json({ error: 'Unauthorized' });
+    }
+};
+
+// ログイン処理
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
+        req.session.isLoggedIn = true;
+        res.json({ success: true });
+    } else {
+        res.status(401).json({ error: 'Invalid credentials' });
+    }
+});
+
+// ログアウト処理
+app.post('/logout', (req, res) => {
+    req.session.destroy();
+    res.json({ success: true });
+});
+
+// ルートアクセス制御
+app.get('/', (req, res) => {
+    if (req.session.isLoggedIn) {
+        res.sendFile(path.join(__dirname, 'index.html'));
+    } else {
+        res.sendFile(path.join(__dirname, 'login.html'));
+    }
+});
+
+// 投票の登録 (保護)
+app.post('/vote', checkAuth, (req, res) => {
     const { option } = req.body;
     
     if (!option) {
@@ -41,8 +85,8 @@ app.post('/vote', (req, res) => {
     stmt.finalize();
 });
 
-// 集計結果の取得
-app.get('/votes', (req, res) => {
+// 集計結果の取得 (保護)
+app.get('/votes', checkAuth, (req, res) => {
     db.all(`
         SELECT option_name as "option", COUNT(*) as count 
         FROM votes 
@@ -56,8 +100,8 @@ app.get('/votes', (req, res) => {
     });
 });
 
-// 投票のリセット
-app.delete('/votes', (req, res) => {
+// 投票のリセット (保護)
+app.delete('/votes', checkAuth, (req, res) => {
     db.run('DELETE FROM votes', (err) => {
         if (err) {
             console.error(err);
