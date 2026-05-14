@@ -176,40 +176,88 @@
 
 <script>
     const form = document.getElementById('voting-form');
-    const votes = {
-        orange: 0,
-        apple: 0,
-        oolong: 0,
-        ginger: 0
+    
+    // 選択肢のIDとサーバーに送る表示名のマッピング
+    const drinkLabels = {
+        'orange': 'オレンジジュース',
+        'apple': 'アップルジュース',
+        'oolong': 'ウーロン茶',
+        'ginger': 'ジンジャエール'
     };
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const selectedDrink = form.drink.value;
-        if (selectedDrink) {
-            votes[selectedDrink]++;
-            updateResults();
-            form.reset();
-        }
-    });
+    /**
+     * サーバーから最新の集計結果を取得して画面を更新する
+     */
+    async function updateDisplay() {
+        try {
+            const response = await fetch('/votes');
+            if (!response.ok) throw new Error('取得失敗');
+            
+            const results = await response.json();
+            
+            // 全ての選択肢を 0票で初期化
+            const voteCounts = { orange: 0, apple: 0, oolong: 0, ginger: 0 };
+            let total = 0;
 
-    function updateResults() {
-        const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
-        
-        for (const [drink, count] of Object.entries(votes)) {
-            const item = document.querySelector(`.result-item[data-drink="${drink}"]`);
-            const countSpan = item.querySelector('.count');
-            const progressFill = item.querySelector('.progress-fill');
-            
-            const percentage = totalVotes === 0 ? 0 : (count / totalVotes) * 100;
-            
-            countSpan.textContent = `${count}票`;
-            progressFill.style.width = `${percentage}%`;
+            // サーバーのデータをマッピング
+            results.forEach(row => {
+                const key = Object.keys(drinkLabels).find(k => drinkLabels[k] === row.option);
+                if (key) {
+                    voteCounts[key] = row.count;
+                    total += row.count;
+                }
+            });
+
+            // HTML要素の更新
+            for (const [id, count] of Object.entries(voteCounts)) {
+                const item = document.querySelector(`.result-item[data-drink="${id}"]`);
+                const countText = item.querySelector('.count');
+                const bar = item.querySelector('.progress-fill');
+                
+                const percent = total === 0 ? 0 : (count / total) * 100;
+                
+                countText.textContent = `${count}票`;
+                bar.style.width = `${percent}%`;
+            }
+        } catch (error) {
+            console.error('結果の更新中にエラーが発生しました:', error);
         }
     }
 
-    // 初期表示
-    updateResults();
+    /**
+     * フォーム送信時の処理
+     */
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        
+        const selectedValue = form.drink.value;
+        const optionName = drinkLabels[selectedValue];
+
+        if (!optionName) return;
+
+        try {
+            // 投票を送信 (POST)
+            const response = await fetch('/vote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ option: optionName })
+            });
+
+            if (response.ok) {
+                // 成功したら表示を更新
+                await updateDisplay();
+                form.reset();
+            } else {
+                alert('投票の送信に失敗しました。');
+            }
+        } catch (error) {
+            console.error('通信エラーが発生しました:', error);
+            alert('サーバーと通信できませんでした。');
+        }
+    });
+
+    // ページ読み込み時に初期データを取得
+    updateDisplay();
 </script>
 
 </body>
