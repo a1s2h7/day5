@@ -1,0 +1,13 @@
+{
+  "name": "voting-app",
+  "version": "1.0.0",
+  "description": "A simple voting app with Express and SQLite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.0",
+    "express": "^4.19.0"
+  }
+}

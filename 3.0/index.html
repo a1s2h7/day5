@@ -87,6 +87,34 @@
             padding-top: 1.5rem;
         }
 
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .results-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .reset-btn {
+            background: none;
+            border: 1px solid #ff4d4f;
+            color: #ff4d4f;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .reset-btn:hover {
+            background-color: #ff4d4f;
+            color: white;
+        }
+
         .result-item {
             margin-bottom: 1rem;
         }
@@ -139,7 +167,10 @@
     </form>
 
     <div id="results-section" class="results">
-        <h2>現在の結果</h2>
+        <div class="results-header">
+            <h2>現在の結果</h2>
+            <button id="reset-button" class="reset-btn">リセット</button>
+        </div>
         <div id="result-list">
             <!-- 結果がここに挿入されます -->
             <div class="result-item" data-drink="orange">
@@ -176,6 +207,7 @@
 
 <script>
     const form = document.getElementById('voting-form');
+    const resetBtn = document.getElementById('reset-button');
     
     // 選択肢のIDとサーバーに送る表示名のマッピング
     const drinkLabels = {
@@ -184,6 +216,24 @@
         'oolong': 'ウーロン茶',
         'ginger': 'ジンジャエール'
     };
+
+    /**
+     * リセット処理
+     */
+    resetBtn.addEventListener('click', async () => {
+        if (confirm('全ての投票データを削除します。よろしいですか？')) {
+            try {
+                const response = await fetch('/votes', { method: 'DELETE' });
+                if (response.ok) {
+                    await updateDisplay();
+                } else {
+                    alert('リセットに失敗しました。');
+                }
+            } catch (error) {
+                console.error('通信エラー:', error);
+            }
+        }
+    });
 
     /**
      * サーバーから最新の集計結果を取得して画面を更新する
