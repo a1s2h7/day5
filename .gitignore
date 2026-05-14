@@ -16,6 +16,9 @@ jspm_packages/
 .env.test.local
 .env.production.local
 
+# Browser cookies export
+cookies.txt
+
 # Logs
 logs
 *.log
